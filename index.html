@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>—</title>
+<style>
+  :root{color-scheme:dark}
+  html,body{height:100%;margin:0;background:#000;overflow:hidden;font-family: "Courier New", Courier, monospace}
+  #overlay{
+    position:fixed;inset:0;background:#000;color:#0f0;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;padding:20px;box-sizing:border-box;
+  }
+  #stream{
+    width:100%;max-width:1100px;height:80vh;overflow:hidden;border-radius:6px;
+    background:linear-gradient(0deg, rgba(0,0,0,0.85), rgba(0,0,0,0.6));
+    box-shadow:0 6px 30px rgba(0,255,0,0.03) inset, 0 0 40px rgba(0,255,0,0.04);
+    padding:18px;font-size:14px;line-height:1.15;white-space:pre-wrap;word-break:break-word;
+    border:1px solid rgba(0,255,128,0.06);
+  }
+  /* russisk "badge" gjemt (men ikke vist) - holdes skjult */
+  .hidden-badge{ display:none; }
+  footer { position:fixed; bottom:8px; left:12px; color:rgba(0,255,0,0.06); font-size:12px; }
+  @media(max-width:600px){ #stream{height:70vh;font-size:13px} }
+</style>
+</head>
+<body>
+  <div id="overlay" role="img" aria-label="Hacker animation">
+    <div id="stream" aria-hidden="true"></div>
+  </div>
+
+<script>
+(() => {
+  // === endre video-URL hvis du vil bruke en annen video ===
+  const videoURL = "https://www.youtube.com/watch?v=0fZ-r5Qe3tM";
+  const redirectAfter = 1000; // millisekunder
+
+  const streamEl = document.getElementById('stream');
+
+  // tegnsett: mye kyrillisk + ASCII slik at det ser russisk "autentisk"
+  const cyr = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
+  const latin = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  const nums = "0123456789";
+  const symbols = "01{}[]()<>=!%&+*-_/:;.,#@$\\|^~?";
+  // eksempler på ord / fraser på russisk (ikke den tidligere "я просто шучу с тобой")
+  const russianPhrases = [
+    "привет", "шутка", "взлом", "секрет", "пароль", "доступ", "сервер", "сеть",
+    "архив", "ключ", "информация", "конфиденциально", "rtfm", "root", "sudo",
+    "пользователь", "логин", "ошибка", "сбой", "защита", "вход"
+  ];
+
+  // tilfeldig fra streng
+  const pick = s => s[Math.floor(Math.random()*s.length)];
+
+  // lag en "linje" som blander kyrillisk, ord og symboler
+  function generateLine(len){
+    // av og til sett inn et helt russisk ord midt i linja
+    let line = "";
+    const insertPhrase = Math.random() < 0.28; // ~28% av linjene får et ord
+    const phrase = russianPhrases[Math.floor(Math.random()*russianPhrases.length)];
+    for(let i=0;i<len;i++){
+      // varier kildene for mer autentisk feel
+      const r = Math.random();
+      if(insertPhrase && i === Math.floor(len/2)){
+        line += phrase + " ";
+        i += phrase.length; // skyv indeks litt (ærlig nok ikke presist, men funker)
+        continue;
+      }
+      if(r < 0.25) line += pick(cyr);
+      else if(r < 0.5) line += pick(latin);
+      else if(r < 0.75) line += pick(nums);
+      else line += pick(symbols);
+    }
+    return line;
+  }
+
+  // flood-funksjon
+  let floodIv = setInterval(() => {
+    const batch = [];
+    const n = 2 + Math.floor(Math.random()*4);
+    for(let i=0;i<n;i++){
+      batch.push(generateLine(40 + Math.floor(Math.random()*50)));
+    }
+    streamEl.textContent += batch.join("\n") + "\n";
+    // trim for ytelse
+    const parts = streamEl.textContent.split("\n");
+    if(parts.length > 180) streamEl.textContent = parts.slice(-150).join("\n");
+    streamEl.scrollTop = streamEl.scrollHeight;
+  }, 35);
+
+  // redirect nøyaktig etter 1000 ms
+  setTimeout(() => {
+    clearInterval(floodIv);
+    // optional: legg inn en veldig kort «flash» av ekstra russisk før redirect (valgfritt)
+    // vi gir et kort øyeblikk slik at strømmen stopper og teksten fryses
+    setTimeout(() => {
+      try{ location.replace(videoURL); } catch(e){ location.href = videoURL; }
+    }, 40);
+  }, redirectAfter);
+
+  // fail-safe: dersom noe svikter, force redirect etter 2500ms
+  setTimeout(()=> {
+    if(location.href.indexOf("youtube.com") === -1){
+      try{ location.replace(videoURL); } catch(e){ location.href = videoURL; }
+    }
+  }, 2500);
+
+})();
+</script>
+<footer>—</footer>
+</body>
+</html>
